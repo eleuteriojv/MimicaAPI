@@ -30,6 +30,12 @@ namespace MimicaAPI.Controllers
         [HttpGet]
         public ActionResult Obter(int id)
         {
+            var obj = _banco.Palavra.Find(id);
+
+            if(obj == null)
+            {
+                return NotFound();
+            }
             return Ok(_banco.Palavra.Find(id));
         }
 
