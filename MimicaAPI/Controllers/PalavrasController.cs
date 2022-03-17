@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MimicaAPI.Data;
 using MimicaAPI.Models;
 using System;
@@ -17,12 +18,18 @@ namespace MimicaAPI.Controllers
             _banco = banco;
         }
 
-        //APP
+        //APP -- /api/palavras?data=2022-01-20
         [Route("")]
         [HttpGet]
-        public ActionResult ObterTodas()
+        public ActionResult ObterTodas(DateTime? data)
         {
-            return Ok(_banco.Palavra);
+            var item = _banco.Palavra.AsQueryable();
+            if (data.HasValue)
+            {
+                item = item.Where(a => a.Criado > data.Value || a.Atualizado > data.Value);
+                
+            }
+            return Ok(item);
         }
 
         //WEB
@@ -31,7 +38,6 @@ namespace MimicaAPI.Controllers
         public ActionResult Obter(int id)
         {
             var obj = _banco.Palavra.Find(id);
-
             if(obj == null)
             {
                 return NotFound();
@@ -45,13 +51,18 @@ namespace MimicaAPI.Controllers
         {
             _banco.Palavra.Add(palavra);
             _banco.SaveChanges();
-            return Ok();
+            return Created($"/api/palavras/{palavra.Id}", palavra);
         }
 
         [Route("{id}")]
         [HttpPut]
         public ActionResult Atualizar(int id, [FromBody] Palavra palavra)
         {
+            var obj = _banco.Palavra.AsNoTracking().FirstOrDefault(x => x.Id == id);
+            if (obj == null)
+            {
+                return NotFound();
+            }
             palavra.Id = id;
             _banco.Palavra.Update(palavra);
             _banco.SaveChanges();
@@ -64,10 +75,15 @@ namespace MimicaAPI.Controllers
         public ActionResult Deletar(int id)
         {
             var palavra = _banco.Palavra.Find(id);
+            if (palavra == null)
+            {
+                return NotFound();
+            }
+
             palavra.Ativo = false;
             _banco.Palavra.Update(palavra);
             _banco.SaveChanges();
-            return Ok();
+            return NoContent();
         }
     }
 }
