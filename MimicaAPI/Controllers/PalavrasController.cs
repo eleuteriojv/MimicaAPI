@@ -23,26 +23,26 @@ namespace MimicaAPI.Controllers
         //APP -- /api/palavras?data=2022-01-20
         [Route("")]
         [HttpGet]
-        public ActionResult ObterTodas(DateTime? data, int? pagNumero, int? pagRegistro)
+        public ActionResult ObterTodas([FromQuery]PalavraUrlQuery query)
         {
             var item = _banco.Palavra.AsQueryable();
-            if (data.HasValue)
+            if (query.Data.HasValue)
             {
-                item = item.Where(a => a.Criado > data.Value || a.Atualizado > data.Value);
+                item = item.Where(a => a.Criado > query.Data.Value || a.Atualizado > query.Data.Value);
                 
             }
-            if(pagNumero.HasValue){
+            if(query.PagNumero.HasValue){
                 var quantidadeTotalRegistros = item.Count();
-                item = item.Skip((pagNumero.Value - 1)* pagRegistro.Value).Take(pagRegistro.Value);
+                item = item.Skip((query.PagNumero.Value - 1)* query.PagRegistro.Value).Take(query.PagRegistro.Value);
                 var paginacao = new Paginacao();
-                paginacao.NumeroPagina = pagNumero.Value;
-                paginacao.RegistroPorPagina = pagRegistro.Value;
+                paginacao.NumeroPagina = query.PagNumero.Value;
+                paginacao.RegistroPorPagina = query.PagRegistro.Value;
                 paginacao.TotalRegistros = quantidadeTotalRegistros;
-                paginacao.TotalPaginas =(int) Math.Ceiling((double)quantidadeTotalRegistros / pagRegistro.Value);
+                paginacao.TotalPaginas =(int) Math.Ceiling((double)quantidadeTotalRegistros / query.PagRegistro.Value);
 
                 Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginacao));
 
-                if (pagNumero > paginacao.TotalPaginas)
+                if (query.PagNumero > paginacao.TotalPaginas)
                 {
                     return NotFound();
                 }
